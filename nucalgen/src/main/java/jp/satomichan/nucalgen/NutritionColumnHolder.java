@@ -22,17 +22,21 @@ public class NutritionColumnHolder {
 
 		List<Object> names = aConfig.getList("cols.column.name");
 		List<Object> dispNames = aConfig.getList("cols.column.disp_name");
+		List<Object> aliases = aConfig.getList("cols.column.alias");
 		List<Object> formats = aConfig.getList("cols.column.format");
 		List<Object> units = aConfig.getList("cols.column.unit");
 		List<Object> useRawValue = aConfig.getList("cols.column.use_raw_value");
+		List<Object> useSum = aConfig.getList("cols.column.use_sum");
 
 		for (Object aName : names) {
 			NutritionColumn nc = new NutritionColumn();
 			nc.setName((String) aName);
 			nc.setDispName((String) dispNames.get(names.indexOf(aName)));
+			nc.setAlias((String) aliases.get(names.indexOf(aName)));
 			nc.setFormat((String) formats.get(names.indexOf(aName)));
 			nc.setUnit((String) units.get(names.indexOf(aName)));
 			nc.setUseRawValue(((String)useRawValue.get(names.indexOf(aName))).equalsIgnoreCase("true"));
+			nc.setUseSum(((String)useSum.get(names.indexOf(aName))).equalsIgnoreCase("true"));
 
 			this.addNutritionColumn(nc);
 		}

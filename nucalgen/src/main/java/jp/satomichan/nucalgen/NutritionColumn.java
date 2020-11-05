@@ -3,9 +3,11 @@ package jp.satomichan.nucalgen;
 public class NutritionColumn {
 	private String name;
 	private String dispName;
+	private String alias;
 	private String format;
 	private String unit;
 	private boolean useRawValue;
+	private boolean useSum;
 
 
 	public String getName() {
@@ -29,6 +31,14 @@ public class NutritionColumn {
 		this.dispName = disp_name;
 	}
 
+
+	public String getAlias() {
+		return alias;
+	}
+
+	public void setAlias(String alias) {
+		this.alias = alias;
+	}
 
 	public String getFormat() {
 		return format;
@@ -56,8 +66,16 @@ public class NutritionColumn {
 	}
 
 
+	public boolean isUseSum() {
+		return useSum;
+	}
+
+	public void setUseSum(boolean useSum) {
+		this.useSum = useSum;
+	}
+
 	public String toString() {
-		String ret = "name={" + name + "} disp_name={" + dispName +
+		String ret = "name={" + name + "} disp_name={" + dispName + " sumAlias={" + alias +
 				"} format={" + format + "} unit={" + unit + "} useRawValue={" + useRawValue + "}";
 
 		return ret;

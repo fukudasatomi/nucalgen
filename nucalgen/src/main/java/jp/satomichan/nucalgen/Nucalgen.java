@@ -17,6 +17,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.usermodel.XSSFName;
 
 public class Nucalgen {
 
@@ -28,6 +29,7 @@ public class Nucalgen {
 		options.addOption(Option.builder("o").required().hasArg().longOpt("output").build());
 		options.addOption(Option.builder("l").required().hasArg().longOpt("lines").build());
 		options.addOption(Option.builder("r").longOpt("use-cache-std-food-comp").build());
+		options.addOption(Option.builder("pfcbalance").build());
 
 		try {
 
@@ -86,9 +88,9 @@ public class Nucalgen {
 			}
 
 
-			//「栄養計算」シート生成
-			Sheet calcSheet = outputWorkbook.createSheet("栄養計算");
-			outputWorkbook.setSheetOrder("栄養計算", 0);
+			//「栄養価計算」シート生成
+			Sheet calcSheet = outputWorkbook.createSheet("栄養価計算");
+			outputWorkbook.setSheetOrder("栄養価計算", 0);
 			//outputWorkbook.setActiveSheet(0);
 			calcSheet.setColumnWidth(2, 10240);
 			calcSheet.addMergedRegion(new CellRangeAddress(1, 2, 1, 1));
@@ -144,9 +146,48 @@ public class Nucalgen {
 			colIndex = 4;
 			for(NutritionColumn aColumn : nc.getNutritionColumnList()) {
 				Cell thisCell = sumRow.createCell(colIndex);
+				String sumArea = new CellReference(calcSheet.getSheetName(), 3, colIndex, true, true).formatAsString() + ":" + new CellReference(calcSheet.getSheetName(), rowIndex -1, colIndex, true, true).formatAsString();
+
+				//名前付き範囲（alias あれば設定）
+				if(aColumn.getAlias().length() > 0) {
+					XSSFName namedRangeSum = (XSSFName) outputWorkbook.createName();
+					namedRangeSum.setNameName("SUM_" + aColumn.getAlias());
+					namedRangeSum.setRefersToFormula(new CellReference(calcSheet.getSheetName(), rowIndex, colIndex, true, true).formatAsString());
+					XSSFName namedRangeArea = (XSSFName) outputWorkbook.createName();
+					namedRangeArea.setNameName("AREA_" + aColumn.getAlias());
+					namedRangeArea.setRefersToFormula(sumArea);
+
+				}
+
 				thisCell.setCellStyle(csPool.getCellStyle(aColumn.getFormat()));
-				thisCell.setCellFormula("SUM(" + new CellReference(3, colIndex).formatAsString() + ":" + new CellReference(rowIndex -1, colIndex).formatAsString() + ")");
+				if(aColumn.isUseSum()) {
+					thisCell.setCellFormula("SUM(" + sumArea + ")");
+				}
 				colIndex++;
+			}
+
+
+			//PFCバランス出力
+			if(cmd.hasOption("pfcbalance")) {
+				rowIndex += 3;
+				Row pfbBalanceRow1 = calcSheet.createRow(rowIndex);
+				pfbBalanceRow1.createCell(1).setCellValue("PFCバランス (%)");
+				calcSheet.addMergedRegion(new CellRangeAddress(rowIndex, rowIndex, 1, 2));
+				pfbBalanceRow1.createCell(3).setCellValue("P");
+				pfbBalanceRow1.createCell(4).setCellValue("F");
+				pfbBalanceRow1.createCell(5).setCellValue("C");
+
+				rowIndex++;
+				Row pfbBalanceRow2 = calcSheet.createRow(rowIndex);
+				Cell pCell = pfbBalanceRow2.createCell(3);
+				pCell.setCellStyle(csPool.getCellStyle("0"));
+				pCell.setCellFormula("SUM_P*4*100/(SUM_P*4+SUM_F*9+SUM_C*4)");
+				Cell fCell = pfbBalanceRow2.createCell(4);
+				fCell.setCellStyle(csPool.getCellStyle("0"));
+				fCell.setCellFormula("SUM_F*9*100/(SUM_P*4+SUM_F*9+SUM_C*4)");
+				Cell cCell = pfbBalanceRow2.createCell(5);
+				cCell.setCellStyle(csPool.getCellStyle("0"));
+				cCell.setCellFormula("SUM_C*4*100/(SUM_P*4+SUM_F*9+SUM_C*4)");
 			}
 
 
